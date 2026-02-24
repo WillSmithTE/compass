@@ -1,13 +1,16 @@
 import SupertokensUserMetadata from "supertokens-node/recipe/usermetadata";
 import { WithCompassId } from "./event.types";
 
+export type AuthProvider = "google" | "password";
+
 export interface Schema_User {
   email: string;
   firstName: string;
   lastName: string;
   name: string;
   locale: string;
-  google: {
+  authProvider: AuthProvider;
+  google?: {
     googleId: string;
     picture: string;
     gRefreshToken: string;

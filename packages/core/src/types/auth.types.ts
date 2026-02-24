@@ -11,3 +11,24 @@ export interface UserInfo_Google {
   gUser: TokenPayload;
   tokens: Credentials;
 }
+
+export interface PasswordSignupInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface PasswordSigninInput {
+  email: string;
+  password: string;
+}
+
+export interface PasswordResetRequestInput {
+  email: string;
+}
+
+export interface PasswordResetInput {
+  token: string;
+  newPassword: string;
+}

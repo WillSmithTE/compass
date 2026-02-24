@@ -6,6 +6,8 @@ import {
   skip,
 } from "rxjs/operators";
 import SuperTokens from "supertokens-web-js";
+import EmailPassword from "supertokens-web-js/recipe/emailpassword";
+import EmailVerification from "supertokens-web-js/recipe/emailverification";
 import Session from "supertokens-web-js/recipe/session";
 import ThirdParty from "supertokens-web-js/recipe/thirdparty";
 import { APP_NAME } from "@core/constants/core.constants";
@@ -24,6 +26,8 @@ SuperTokens.init({
   },
   recipeList: [
     ThirdParty.init(),
+    EmailPassword.init(),
+    EmailVerification.init(),
     Session.init({
       postAPIHook: async (context) => {
         session.emit(context.action, context);

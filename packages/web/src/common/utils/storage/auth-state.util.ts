@@ -58,7 +58,7 @@ export function updateAuthState(updates: Partial<AuthState>): void {
 }
 
 /**
- * Marks that the user has authenticated at least once.
+ * Marks that the user has authenticated at least once with Google OAuth.
  * Once set, the app will always use RemoteEventRepository instead of LocalEventRepository.
  * This prevents the UX issue where events disappear after login due to cleared IndexedDB.
  */
@@ -66,21 +66,36 @@ export function markUserAsAuthenticated(): void {
   if (typeof window === "undefined") return;
 
   try {
-    updateAuthState({ isGoogleAuthenticated: true });
+    updateAuthState({ isGoogleAuthenticated: true, isAuthenticated: true });
   } catch {
     // Silently fail if localStorage is unavailable
   }
 }
 
 /**
- * Checks if the user has ever authenticated.
+ * Marks that the user has authenticated with email/password.
+ * Does not set isGoogleAuthenticated since Google Calendar is not connected.
+ */
+export function markPasswordUserAsAuthenticated(): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    updateAuthState({ isAuthenticated: true });
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+}
+
+/**
+ * Checks if the user has ever authenticated (any method).
  * Returns true if the user has logged in at least once.
  *
  * @returns true if user has previously authenticated
  */
 export function hasUserEverAuthenticated(): boolean {
   try {
-    return getAuthState().isGoogleAuthenticated;
+    const state = getAuthState();
+    return state.isGoogleAuthenticated || state.isAuthenticated;
   } catch {
     return false;
   }
