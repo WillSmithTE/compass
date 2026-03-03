@@ -46,6 +46,9 @@
   --color-text-dark: hsl(222 28 7);
   --color-text-dark-placeholder: hsl(219 8 46 / 90.2%);
 
+  /* Focus */
+  --color-focus-primary: hsl(202 100 67);
+
   /* Font sizes */
   --font-size-xs: 0.563rem;
   --font-size-s: 0.688rem;
@@ -185,4 +188,15 @@
 
 @utility overflow-y-auto {
   @apply compass-scroll;
+}
+
+@utility focus-primary {
+  &:focus {
+    outline: none;
+  }
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--radius-default);
+    box-shadow: 0 0 0 2px var(--color-focus-primary);
+  }
 }

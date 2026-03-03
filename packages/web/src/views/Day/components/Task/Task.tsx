@@ -50,7 +50,7 @@ export const Task = ({
       key={task._id}
       {...{ [DATA_TASK_ELEMENT_ID]: task._id }}
       data-testid={task._id}
-      className={`group flex items-start gap-3 rounded border p-2 transition-colors duration-200 focus-within:border-blue-200/50 focus-within:ring-1 focus-within:ring-blue-200/30 ${task.status === "completed" ? "opacity-50" : ""}`}
+      className={`group flex items-start gap-3 rounded border p-2 transition-colors duration-200 focus-within:border-focus-primary/50 focus-within:ring-1 focus-within:ring-focus-primary/30 ${task.status === "completed" ? "opacity-50" : ""}`}
     >
       <button
         role="checkbox"
@@ -64,7 +64,7 @@ export const Task = ({
         }}
         onKeyDown={(e) => onCheckboxKeyDown(e, task._id, task.title)}
         onClick={() => onStatusToggle(task._id)}
-        className="mt-1 rounded-full focus:ring-2 focus:ring-blue-200 focus:outline-none"
+        className="mt-1 rounded-full focus:ring-2 focus:ring-focus-primary focus:outline-none"
       >
         <TaskCircleIcon status={task.status} />
       </button>
