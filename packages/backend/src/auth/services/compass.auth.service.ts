@@ -7,13 +7,10 @@ import { StringV4Schema, zObjectId } from "@core/types/type.utils";
 import GoogleAuthService from "@backend/auth/services/google.auth.service";
 import { ENV } from "@backend/common/constants/env.constants";
 import { isMissingUserTagId } from "@backend/common/constants/env.util";
-import { error } from "@backend/common/errors/handlers/error.handler";
 import { SyncError } from "@backend/common/errors/sync/sync.errors";
 import mongoService from "@backend/common/services/mongo.service";
 import EmailService from "@backend/email/email.service";
 import syncService from "@backend/sync/services/sync.service";
-import { getSync } from "@backend/sync/util/sync.queries";
-import { canDoIncrementalSync } from "@backend/sync/util/sync.util";
 import { findCompassUserBy } from "@backend/user/queries/user.queries";
 import userMetadataService from "@backend/user/services/user-metadata.service";
 import userService from "@backend/user/services/user.service";
@@ -25,22 +22,10 @@ class CompassAuthService {
     const user = await findCompassUserBy("google.googleId", gUserId);
 
     if (!user) {
-      return { authMethod: "signup", user: null };
-    }
-    const userId = user._id.toString();
-
-    const sync = await getSync({ userId });
-    if (!sync) {
-      throw error(
-        SyncError.NoSyncRecordForUser,
-        "Did not verify sync record for user",
-      );
+      return { authMethod: "signup" as const, user: null };
     }
 
-    const canLogin = canDoIncrementalSync(sync);
-    const authMethod = user && canLogin ? "login" : "signup";
-
-    return { authMethod, user };
+    return { authMethod: "login" as const, user };
   };
 
   createSessionForUser = async (cUserId: string) => {
