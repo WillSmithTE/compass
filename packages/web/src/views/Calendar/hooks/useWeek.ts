@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Dayjs } from "@core/util/date/dayjs";
+import dayjs, { Dayjs } from "@core/util/date/dayjs";
+import { STORAGE_KEYS } from "@web/common/constants/storage.constants";
 import {
   computeSomedayEventsRequestFilter,
   toUTCOffset,
@@ -13,11 +14,39 @@ import { Category_View } from "@web/views/Calendar/calendarView.types";
 
 export type WeekNavigationSource = "manual" | "drag-to-edge";
 
+const readPersistedWeekStart = (fallback: Dayjs): Dayjs => {
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.WEEK_START);
+    if (!stored) return fallback;
+
+    const parsed = dayjs(stored);
+    if (!parsed.isValid()) return fallback;
+
+    return parsed.startOf("week");
+  } catch {
+    return fallback;
+  }
+};
+
+const persistWeekStart = (start: Dayjs): void => {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.WEEK_START, start.format());
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+};
+
 export const useWeek = (today: Dayjs) => {
   const dispatch = useAppDispatch();
 
   const origStart = useMemo(() => today.startOf("week"), [today]);
-  const [start, setStartOfView] = useState(origStart);
+  const [start, setStartOfView] = useState(() =>
+    readPersistedWeekStart(origStart),
+  );
   const navigationSourceRef = useRef<WeekNavigationSource>("manual");
   const end = useMemo(() => start.endOf("week"), [start]);
 
@@ -59,6 +88,7 @@ export const useWeek = (today: Dayjs) => {
   ]);
 
   useEffect(() => {
+    persistWeekStart(start);
     dispatch(
       updateDates({
         start: start.format(),
