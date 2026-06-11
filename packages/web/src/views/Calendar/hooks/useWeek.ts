@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Dayjs } from "@core/util/date/dayjs";
+import dayjs, { Dayjs } from "@core/util/date/dayjs";
 import {
   computeSomedayEventsRequestFilter,
   toUTCOffset,
 } from "@web/common/utils/datetime/web.date.util";
+import {
+  getStoredWeekStart,
+  setStoredWeekStart,
+} from "@web/common/utils/storage/week-state.util";
 import { Week_AsyncStateContextReason } from "@web/ducks/events/context/week.context";
 import { getSomedayEventsSlice } from "@web/ducks/events/slices/someday.slice";
 import { updateDates } from "@web/ducks/events/slices/view.slice";
@@ -16,7 +20,12 @@ export type WeekNavigationSource = "manual" | "drag-to-edge";
 export const useWeek = (today: Dayjs) => {
   const dispatch = useAppDispatch();
 
-  const origStart = useMemo(() => today.startOf("week"), [today]);
+  const origStart = useMemo(() => {
+    const stored = getStoredWeekStart();
+    return stored ? dayjs(stored).startOf("week") : today.startOf("week");
+    // Only seed from storage on mount; later renders keep the user's selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [start, setStartOfView] = useState(origStart);
   const navigationSourceRef = useRef<WeekNavigationSource>("manual");
   const end = useMemo(() => start.endOf("week"), [start]);
@@ -66,6 +75,10 @@ export const useWeek = (today: Dayjs) => {
       }),
     );
   }, [dispatch, end, start]);
+
+  useEffect(() => {
+    setStoredWeekStart(start.format());
+  }, [start]);
 
   const decrementWeek = (source: WeekNavigationSource = "manual") => {
     navigationSourceRef.current = source;
