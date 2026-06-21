@@ -134,8 +134,7 @@ export function Agenda() {
           ref={timedEventsContainerRef}
           className={classNames(
             "relative mt-1 flex flex-1 overflow-x-hidden overflow-y-auto",
-            "focus:outline-none focus-visible:rounded focus-visible:ring-2",
-            "focus-visible:ring-yellow-200 focus-visible:outline-none",
+            "focus-primary",
             "select-none",
           )}
           data-testid="calendar-scroll"

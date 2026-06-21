@@ -100,9 +100,8 @@ export const DraggableTimedAgendaEvent = memo(
         asChild
         className={classNames(
           CLASS_TIMED_CALENDAR_EVENT,
-          "absolute touch-none rounded focus:outline-none",
-          "focus-visible:rounded focus-visible:ring-2",
-          "focus:outline-none focus-visible:ring-yellow-200",
+          "absolute touch-none rounded",
+          "focus-primary",
           cursorClass,
           { "pointer-events-none": isBeingSelected },
         )}
