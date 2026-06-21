@@ -3,6 +3,8 @@ import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
 import supertokens, { default as SuperTokens, User } from "supertokens-node";
 import Dashboard from "supertokens-node/recipe/dashboard";
+import EmailPassword from "supertokens-node/recipe/emailpassword";
+import EmailVerification from "supertokens-node/recipe/emailverification";
 import Session from "supertokens-node/recipe/session";
 import ThirdParty from "supertokens-node/recipe/thirdparty";
 import UserMetadata from "supertokens-node/recipe/usermetadata";
@@ -13,10 +15,16 @@ import {
 } from "@core/constants/core.constants";
 import { BaseError } from "@core/errors/errors.base";
 import { Status } from "@core/errors/status.codes";
+import { Logger } from "@core/logger/winston.logger";
+import { mapPasswordUserToCompass } from "@core/mappers/map.user";
+import { mapCompassUserToEmailSubscriber } from "@core/mappers/subscriber/map.subscriber";
 import { zObjectId } from "@core/types/type.utils";
 import compassAuthService from "@backend/auth/services/compass.auth.service";
 import { ENV } from "@backend/common/constants/env.constants";
+import { isMissingUserTagId } from "@backend/common/constants/env.util";
 import mongoService from "@backend/common/services/mongo.service";
+import EmailService from "@backend/email/email.service";
+import priorityService from "@backend/priority/services/priority.service";
 import syncService from "@backend/sync/services/sync.service";
 import userMetadataService from "@backend/user/services/user-metadata.service";
 
@@ -144,6 +152,116 @@ export const initSupertokens = () => {
           },
         },
       }),
+      EmailPassword.init({
+        override: {
+          functions(originalImplementation) {
+            const epLogger = Logger("app:emailpassword");
+
+            return {
+              ...originalImplementation,
+              async signUp(input) {
+                const response = await originalImplementation.signUp(input);
+
+                if (
+                  response.status === "OK" &&
+                  response.user.loginMethods.length === 1
+                ) {
+                  const userId = response.user.id;
+                  const email = input.email;
+
+                  try {
+                    // Extract first/last name from user metadata if available
+                    // (set by frontend during signup via formFields)
+                    let firstName = "";
+                    let lastName = "";
+                    try {
+                      const metadata =
+                        await UserMetadata.getUserMetadata(userId);
+                      firstName =
+                        (metadata.metadata?.firstName as string) || "";
+                      lastName = (metadata.metadata?.lastName as string) || "";
+                    } catch {
+                      // metadata not set yet, use defaults
+                    }
+
+                    const compassUser = mapPasswordUserToCompass(
+                      email,
+                      firstName,
+                      lastName,
+                    );
+                    const _id = zObjectId.parse(userId, {
+                      error: () => "Invalid user ID",
+                    });
+
+                    await mongoService.user.insertOne({
+                      ...compassUser,
+                      _id,
+                      signedUpAt: new Date(),
+                    });
+
+                    await priorityService.createDefaultPriorities(userId);
+
+                    await userMetadataService.updateUserMetadata({
+                      userId,
+                      data: {
+                        skipOnboarding: false,
+                      },
+                    });
+
+                    if (!isMissingUserTagId()) {
+                      const subscriber =
+                        mapCompassUserToEmailSubscriber(compassUser);
+                      await EmailService.addTagToSubscriber(
+                        subscriber,
+                        ENV.EMAILER_USER_TAG_ID!,
+                      ).catch((err) => {
+                        epLogger.warn(
+                          "Failed to tag email subscriber during password signup",
+                          err,
+                        );
+                      });
+                    }
+
+                    epLogger.info(
+                      `Password signup completed for user ${userId}`,
+                    );
+                  } catch (err) {
+                    epLogger.error(
+                      `Error during password signup for user ${userId}:`,
+                      err,
+                    );
+                  }
+                }
+
+                return response;
+              },
+              async signIn(input) {
+                const response = await originalImplementation.signIn(input);
+
+                if (response.status === "OK") {
+                  const userId = response.user.id;
+                  try {
+                    await mongoService.user.updateOne(
+                      { _id: zObjectId.parse(userId) },
+                      { $set: { lastLoggedInAt: new Date() } },
+                    );
+                  } catch (err) {
+                    epLogger.error(
+                      `Error updating lastLoggedInAt for user ${userId}:`,
+                      err,
+                    );
+                  }
+                }
+
+                return response;
+              },
+            };
+          },
+        },
+      }),
+      EmailVerification.init({
+        mode: "REQUIRED",
+      }),
       Dashboard.init(),
       Session.init({
         override: {
@@ -169,13 +287,21 @@ export const initSupertokens = () => {
 
                 const res = await originalImplementation.signOutPOST(input);
 
-                await userMetadataService.updateUserMetadata({
-                  userId: userId.toString(),
-                  data: { sync: { incrementalGCalSync: "restart" } },
-                });
+                // Only manage Google Calendar sync for Google OAuth users
+                const user = await mongoService.user.findOne(
+                  { _id: userId },
+                  { projection: { authProvider: 1 } },
+                );
 
-                if (lastActiveSession) {
-                  await syncService.stopWatches(userId.toString());
+                if (!user || user.authProvider !== "password") {
+                  await userMetadataService.updateUserMetadata({
+                    userId: userId.toString(),
+                    data: { sync: { incrementalGCalSync: "restart" } },
+                  });
+
+                  if (lastActiveSession) {
+                    await syncService.stopWatches(userId.toString());
+                  }
                 }
 
                 return res;

@@ -94,6 +94,51 @@ export const router = createBrowserRouter(
         },
       ],
     },
+    {
+      path: ROOT_ROUTES.LOGIN,
+      lazy: async () =>
+        import(
+          /* webpackChunkName: "login" */ "@web/views/Login/LoginView"
+        ).then((module) => ({
+          Component: module.LoginView,
+        })),
+    },
+    {
+      path: ROOT_ROUTES.SIGNUP,
+      lazy: async () =>
+        import(
+          /* webpackChunkName: "signup" */ "@web/views/Signup/SignupView"
+        ).then((module) => ({
+          Component: module.SignupView,
+        })),
+    },
+    {
+      path: ROOT_ROUTES.FORGOT_PASSWORD,
+      lazy: async () =>
+        import(
+          /* webpackChunkName: "forgot-password" */ "@web/views/ForgotPassword/ForgotPasswordView"
+        ).then((module) => ({
+          Component: module.ForgotPasswordView,
+        })),
+    },
+    {
+      path: ROOT_ROUTES.RESET_PASSWORD,
+      lazy: async () =>
+        import(
+          /* webpackChunkName: "reset-password" */ "@web/views/ResetPassword/ResetPasswordView"
+        ).then((module) => ({
+          Component: module.ResetPasswordView,
+        })),
+    },
+    {
+      path: ROOT_ROUTES.VERIFY_EMAIL,
+      lazy: async () =>
+        import(
+          /* webpackChunkName: "verify-email" */ "@web/views/VerifyEmail/VerifyEmailView"
+        ).then((module) => ({
+          Component: module.VerifyEmailView,
+        })),
+    },
     ...devOnlyRoutes,
     {
       path: "*",

@@ -43,6 +43,16 @@ export const getGAuthClientForUser = async (
       throw error(UserError.UserNotFound, "Auth client not initialized");
     }
 
+    if (!_user.google?.gRefreshToken) {
+      logger.error(
+        `User ${userId} does not have Google credentials (password-based user)`,
+      );
+      throw error(
+        AuthError.NoGAuthAccessToken,
+        "User does not have Google Calendar connected",
+      );
+    }
+
     gRefreshToken = _user.google.gRefreshToken;
   }
 

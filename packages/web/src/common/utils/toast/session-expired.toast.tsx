@@ -1,5 +1,7 @@
+import { Link } from "react-router-dom";
 import { Id, toast } from "react-toastify";
 import { useGoogleAuth } from "@web/auth/hooks/oauth/useGoogleAuth";
+import { ROOT_ROUTES } from "@web/common/constants/routes";
 
 interface SessionExpiredToastProps {
   toastId: Id;
@@ -16,7 +18,7 @@ export const SessionExpiredToast = ({ toastId }: SessionExpiredToastProps) => {
   return (
     <div className="flex w-full flex-col gap-2">
       <p className="text-sm text-white">
-        Google Calendar connection expired. Please reconnect.
+        Your session has expired. Please sign in again.
       </p>
       <button
         className="bg-fg-primary-dark text-text-lighter w-full rounded px-3 py-2 text-sm font-medium transition-colors hover:bg-[color-mix(in_srgb,var(--color-fg-primary-dark)_90%,white)]"
@@ -25,6 +27,13 @@ export const SessionExpiredToast = ({ toastId }: SessionExpiredToastProps) => {
       >
         Reconnect Google Calendar
       </button>
+      <Link
+        to={ROOT_ROUTES.LOGIN}
+        onClick={() => toast.dismiss(toastId)}
+        className="text-text-lighter w-full rounded px-3 py-1 text-center text-sm transition-colors hover:underline"
+      >
+        Sign in with email
+      </Link>
     </div>
   );
 };

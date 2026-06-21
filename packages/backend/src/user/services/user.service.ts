@@ -59,7 +59,9 @@ class UserService {
         session,
         projection: {
           userId: { $toString: "$_id" },
-          picture: "$google.picture",
+          picture: {
+            $ifNull: ["$google.picture", ""],
+          },
           firstName: 1,
           lastName: 1,
           name: 1,
