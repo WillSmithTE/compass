@@ -11,3 +11,7 @@ export const isMissingWaitlistTagId = () => {
 export const isMissingWaitlistInviteTagId = () => {
   return !ENV.EMAILER_SECRET || !ENV.EMAILER_WAITLIST_INVITE_TAG_ID;
 };
+
+export const isMissingOnboardingSeqTagId = () => {
+  return !ENV.EMAILER_SECRET || !ENV.EMAILER_ONBOARDING_SEQ_TAG_ID;
+};

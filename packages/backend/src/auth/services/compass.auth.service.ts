@@ -6,7 +6,10 @@ import { mapCompassUserToEmailSubscriber } from "@core/mappers/subscriber/map.su
 import { StringV4Schema, zObjectId } from "@core/types/type.utils";
 import GoogleAuthService from "@backend/auth/services/google.auth.service";
 import { ENV } from "@backend/common/constants/env.constants";
-import { isMissingUserTagId } from "@backend/common/constants/env.util";
+import {
+  isMissingOnboardingSeqTagId,
+  isMissingUserTagId,
+} from "@backend/common/constants/env.util";
 import { error } from "@backend/common/errors/handlers/error.handler";
 import { SyncError } from "@backend/common/errors/sync/sync.errors";
 import mongoService from "@backend/common/services/mongo.service";
@@ -105,6 +108,17 @@ class CompassAuthService {
           subscriber,
           ENV.EMAILER_USER_TAG_ID!,
         );
+
+        if (isMissingOnboardingSeqTagId()) {
+          logger.warn(
+            "Did not tag subscriber for onboarding sequence due to missing EMAILER_ONBOARDING_SEQ_TAG_ID ENV value",
+          );
+        } else {
+          await EmailService.addTagToSubscriber(
+            subscriber,
+            ENV.EMAILER_ONBOARDING_SEQ_TAG_ID!,
+          );
+        }
       }
 
       userService.restartGoogleCalendarSync(cUser.userId).catch((err) => {
